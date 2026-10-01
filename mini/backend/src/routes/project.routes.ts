@@ -28,6 +28,7 @@ router.get("/:id/schedule/validate", requireProjectAccess, schedulingController.
 router.get("/:id/schedule/impact", requireProjectAccess, delayImpactController.getProjectImpact);
 router.get("/:id/schedule", requireProjectAccess, schedulingController.getSchedule);
 router.get("/:id/critical-path", requireProjectAccess, schedulingController.getCriticalPath);
+router.get("/:id/dashboard", requireProjectAccess, projectController.dashboard);
 
 // Single project — requires membership
 router.get("/:id", requireProjectAccess, projectController.getById);

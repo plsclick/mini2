@@ -2,7 +2,7 @@ import { prisma } from "../config/database";
 import { hashPassword, verifyPassword } from "../utils/password";
 import { signToken } from "../utils/jwt";
 import { ConflictError, UnauthorizedError } from "../utils/errors";
-import type { RegisterInput, LoginInput } from "../validators/auth.validator";
+import type { RegisterInput, LoginInput, UpdateProfileInput } from "../validators/auth.validator";
 
 export const authService = {
   async register(input: RegisterInput) {
@@ -18,7 +18,7 @@ export const authService = {
         name: input.name,
         email: input.email.toLowerCase(),
         passwordHash,
-        role: "CLIENT",
+        role: input.role,
         organization: { create: { name: orgName } },
       },
       select: {
@@ -80,5 +80,23 @@ export const authService = {
       },
     });
     return user;
+  },
+
+  async updateProfile(userId: string, input: UpdateProfileInput) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: input,
+      select: {
+        id: true,
+        organizationId: true,
+        name: true,
+        email: true,
+        role: true,
+        avatarUrl: true,
+        isActive: true,
+        createdAt: true,
+        organization: { select: { id: true, name: true } },
+      },
+    });
   },
 };

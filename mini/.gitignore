@@ -1,2 +1,10 @@
+node_modules/
 
-/src-tauri/target/
+frontend/dist/
+backend/dist/
+
+.env
+*.log
+.DS_Store
+
+src-tauri/target/
