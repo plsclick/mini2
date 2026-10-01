@@ -1,0 +1,58 @@
+import type { Risk } from "../types/risk";
+
+export const risks: Risk[] = [
+  {
+    id: "r-steel",
+    source: "Steel Delivery",
+    task: "Structural Steel",
+    level: "high",
+    impact: "+3 days on critical path",
+    probability: 0.85,
+    status: "active",
+  },
+  {
+    id: "r-workforce",
+    source: "Workforce Shortage",
+    task: "Electrical Conduit",
+    level: "medium",
+    impact: "+1 day",
+    probability: 0.55,
+    status: "active",
+  },
+  {
+    id: "r-interior-mat",
+    source: "Interior Material Lead Time",
+    task: "Interior Preparation",
+    level: "low",
+    impact: "+0 days (buffer absorbed)",
+    probability: 0.3,
+    status: "active",
+  },
+  {
+    id: "r-weather",
+    source: "Monsoon Weather",
+    task: "Structure",
+    level: "medium",
+    impact: "+2 days if onset early",
+    probability: 0.4,
+    status: "active",
+  },
+  {
+    id: "r-approval",
+    source: "Electrical Approval Delay",
+    task: "Electrical Conduit",
+    level: "medium",
+    impact: "+2 days",
+    probability: 0.35,
+    status: "resolved",
+  },
+  {
+    id: "r-crane",
+    source: "Equipment Breakdown",
+    task: "Structural Steel",
+    level: "high",
+    impact: "+4 days",
+    probability: 0.2,
+    status: "active",
+  },
+];

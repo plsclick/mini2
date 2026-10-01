@@ -1,0 +1,68 @@
+import type { Milestone } from "../types/milestone";
+
+export const milestones: Milestone[] = [
+  {
+    id: "ms-planning",
+    name: "Planning Complete",
+    plannedDate: "20 Sep 2026",
+    projectedDate: "20 Sep 2026",
+    status: "complete",
+    dependency: "All planning tasks",
+  },
+  {
+    id: "ms-foundation",
+    name: "Foundation Complete",
+    plannedDate: "12 Oct 2026",
+    projectedDate: "12 Oct 2026",
+    status: "complete",
+    dependency: "Foundation slab",
+  },
+  {
+    id: "ms-structure",
+    name: "Structure Complete",
+    plannedDate: "18 Nov 2026",
+    projectedDate: "21 Nov 2026",
+    status: "in-progress",
+    dependency: "All structure tasks",
+  },
+  {
+    id: "ms-electrical",
+    name: "Electrical Complete",
+    plannedDate: "02 Dec 2026",
+    projectedDate: "03 Dec 2026",
+    status: "upcoming",
+    dependency: "Electrical Conduit",
+  },
+  {
+    id: "ms-plumbing",
+    name: "Plumbing Complete",
+    plannedDate: "05 Dec 2026",
+    projectedDate: "06 Dec 2026",
+    status: "upcoming",
+    dependency: "Plumbing Rough-in",
+  },
+  {
+    id: "ms-interior",
+    name: "Interior Complete",
+    plannedDate: "12 Dec 2026",
+    projectedDate: "14 Dec 2026",
+    status: "upcoming",
+    dependency: "Interior Preparation",
+  },
+  {
+    id: "ms-inspection",
+    name: "Final Inspection",
+    plannedDate: "17 Dec 2026",
+    projectedDate: "21 Dec 2026",
+    status: "upcoming",
+    dependency: "All finishing tasks",
+  },
+  {
+    id: "ms-handover",
+    name: "Handover",
+    plannedDate: "18 Dec 2026",
+    projectedDate: "22 Dec 2026",
+    status: "upcoming",
+    dependency: "Final Inspection",
+  },
+];
