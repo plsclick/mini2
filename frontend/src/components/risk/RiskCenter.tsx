@@ -1,29 +1,13 @@
 import { ChevronRight } from "lucide-react";
-const risks = [
-  ["HIGH", "Steel Delivery", "Impact: +3 days", "red"],
-  ["MEDIUM", "Electrical Workforce", "Impact: +1 day", "amber"],
-  ["LOW", "Interior Material", "Impact: +0 days", "blue"],
-];
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useActiveProject } from "../../hooks/useActiveProject";
+import { projectDataService, type ApiRisk } from "../../services/projectDataService";
+
 export function RiskCenter() {
-  return (
-    <section className="card risk">
-      <div className="card-head">
-        <div>
-          <p className="eyebrow">RISK CENTER</p>
-          <h2>Priority risks</h2>
-        </div>
-        <button className="link">View all</button>
-      </div>
-      {risks.map(([severity, title, impact, tone]) => (
-        <button className="risk-item" key={title}>
-          <i className={tone}>{severity}</i>
-          <span>
-            <b>{title}</b>
-            <small>{impact}</small>
-          </span>
-          <ChevronRight size={16} />
-        </button>
-      ))}
-    </section>
-  );
+  const navigate = useNavigate();
+  const { project } = useActiveProject();
+  const [risks, setRisks] = useState<ApiRisk[]>([]);
+  useEffect(() => { if (project) void projectDataService.listRisks(project.id).then(setRisks); else setRisks([]); }, [project?.id]);
+  return <section className="card risk"><div className="card-head"><div><p className="eyebrow">RISK CENTER</p><h2>Priority risks</h2></div><button className="link" type="button" onClick={() => navigate("/pm/risks")}>VIEW ALL</button></div>{!risks.length && <p className="schedule-empty">No risks have been added to this project.</p>}{risks.slice(0, 5).map((risk) => <button className="risk-item" type="button" key={risk.id} onClick={() => navigate("/pm/risks")}><i className={risk.severity.toLowerCase()}>{risk.severity}</i><span><b>{risk.title}</b><small>{risk.description ?? `${risk.status} · impact ${risk.impact}`}</small></span><ChevronRight size={16} /></button>)}</section>;
 }

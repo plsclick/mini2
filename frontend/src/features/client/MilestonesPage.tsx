@@ -1,64 +1,11 @@
+import { useEffect, useState } from "react";
 import { AppShell } from "../../components/navigation/AppShell";
-import { milestones } from "../../mock/milestones";
-
-const statusIcon: Record<string, { symbol: string; cls: string }> = {
-  complete: { symbol: "✓", cls: "good" },
-  "in-progress": { symbol: "●", cls: "warn" },
-  upcoming: { symbol: "○", cls: "" },
-};
+import { useActiveProject } from "../../hooks/useActiveProject";
+import { projectDataService, type ApiMilestone } from "../../services/projectDataService";
 
 export function MilestonesPage() {
-  return (
-    <AppShell>
-      <main className="page">
-        <section className="page-title compact">
-          <div>
-            <p className="eyebrow">SKYLINE RESIDENCY · MILESTONES</p>
-            <h1>Project milestones</h1>
-            <p>Key project checkpoints and their current status.</p>
-          </div>
-        </section>
-
-        <section className="card" style={{ maxWidth: 820 }}>
-          <div className="card-head">
-            <div>
-              <p className="eyebrow">ALL MILESTONES</p>
-              <h2>{milestones.length} checkpoints defined</h2>
-            </div>
-          </div>
-          {milestones.map((ms) => {
-            const icon = statusIcon[ms.status];
-            const isDelayed = ms.projectedDate !== ms.plannedDate;
-            return (
-              <div key={ms.id} className="milestone">
-                <i className={icon.cls} style={{ fontStyle: "normal" }}>
-                  {icon.symbol}
-                </i>
-                <div style={{ flex: 1 }}>
-                  <b>{ms.name}</b>
-                  <small>{ms.dependency}</small>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <small style={{ fontFamily: "DM Mono", fontSize: 9, color: "var(--dim)", display: "block" }}>
-                    PLANNED
-                  </small>
-                  <span style={{ fontSize: 11 }}>{ms.plannedDate}</span>
-                </div>
-                {isDelayed && (
-                  <div style={{ textAlign: "right", minWidth: 100 }}>
-                    <small style={{ fontFamily: "DM Mono", fontSize: 9, color: "var(--dim)", display: "block" }}>
-                      PROJECTED
-                    </small>
-                    <span style={{ fontSize: 11, color: "var(--red)" }}>
-                      {ms.projectedDate}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </section>
-      </main>
-    </AppShell>
-  );
+  const { project } = useActiveProject();
+  const [milestones, setMilestones] = useState<ApiMilestone[]>([]);
+  useEffect(() => { if (project) void projectDataService.listMilestones(project.id).then(setMilestones); else setMilestones([]); }, [project?.id]);
+  return <AppShell><main className="page"><section className="page-title compact"><div><p className="eyebrow">{project?.name ?? "NO PROJECT"} · MILESTONES</p><h1>Project milestones</h1><p>Key checkpoints stored for this project.</p></div></section><section className="card" style={{ maxWidth: 820 }}><div className="card-head"><div><p className="eyebrow">ALL MILESTONES</p><h2>{milestones.length} checkpoints defined</h2></div></div>{!milestones.length && <p className="schedule-empty">No milestones have been added to this project.</p>}{milestones.map((milestone) => <div key={milestone.id} className="milestone"><i className={milestone.status === "ACHIEVED" ? "good" : milestone.status === "MISSED" ? "warn" : ""} style={{ fontStyle: "normal" }}>{milestone.status === "ACHIEVED" ? "✓" : milestone.status === "MISSED" ? "!" : "○"}</i><div style={{ flex: 1 }}><b>{milestone.name}</b><small>{milestone.task?.name ?? "No task linked"}</small></div><div style={{ textAlign: "right" }}><small style={{ fontFamily: "DM Mono", fontSize: 9, color: "var(--dim)", display: "block" }}>PLANNED</small><span style={{ fontSize: 11 }}>{new Date(milestone.plannedDate).toLocaleDateString()}</span></div></div>)}</section></main></AppShell>;
 }

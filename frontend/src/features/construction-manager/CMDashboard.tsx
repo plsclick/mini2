@@ -15,8 +15,8 @@ import { AppShell } from "../../components/navigation/AppShell";
 import { ActivityFeed } from "../../components/dashboard/ActivityFeed";
 import { MetricCard } from "../../components/ui/MetricCard";
 import { StatusBadge } from "../../components/ui/StatusBadge";
-import { activeTasks } from "../../mock/tasks";
 import { ActionModal } from "./ActionModal";
+import { useProjectSchedule } from "../../hooks/useProjectSchedule";
 const actions = [
   ["UPDATE PROGRESS", Activity],
   ["REPORT DELAY", AlertTriangle],
@@ -28,12 +28,14 @@ const actions = [
 export function CMDashboard() {
   const [action, setAction] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { schedule, dashboard } = useProjectSchedule();
+  const activeTasks = (schedule?.tasks ?? []).filter((task) => task.status === "IN_PROGRESS" || task.status === "BLOCKED");
   return (
     <AppShell>
       <main className="page cm-page">
         <section className="page-title">
           <div>
-            <p className="eyebrow">SITE OPERATIONS · WEDNESDAY, 18 NOV</p>
+            <p className="eyebrow">SITE OPERATIONS · {dashboard?.project.name ?? "NO PROJECT"}</p>
             <h1>Today’s operations</h1>
             <p>Keep site work moving and report exceptions early.</p>
           </div>
@@ -48,21 +50,21 @@ export function CMDashboard() {
         <div className="metrics four">
           <MetricCard
             label="ACTIVE TASKS"
-            value="08"
-            detail="3 on your watch"
+            value={String(activeTasks.length).padStart(2, "0")}
+            detail="In progress or blocked"
             tone="amber"
           />
-          <MetricCard label="COMPLETED TODAY" value="04" detail="Target: 6" />
+          <MetricCard label="COMPLETED TASKS" value={String(dashboard?.statistics.completedTasks ?? 0).padStart(2, "0")} detail={`of ${dashboard?.statistics.totalTasks ?? 0} total`} />
           <MetricCard
             label="DELAYED"
-            value="02"
-            detail="Needs attention"
+            value={String(dashboard?.statistics.activeDelays ?? 0).padStart(2, "0")}
+            detail="Active delays"
             tone="danger"
           />
           <MetricCard
             label="OPEN ISSUES"
-            value="03"
-            detail="2 material related"
+            value={String(dashboard?.statistics.activeRisks ?? 0).padStart(2, "0")}
+            detail="Active risks"
           />
         </div>
         <section className="quick">
@@ -81,25 +83,23 @@ export function CMDashboard() {
                 <p className="eyebrow">ACTIVE WORK</p>
                 <h2>On site now</h2>
               </div>
-              <button className="link">View all tasks</button>
+              <button className="link" type="button" onClick={() => navigate("/cm/tasks")}>View all tasks</button>
             </div>
             {activeTasks.map((task) => (
-              <div className="task-card" key={task.id}>
+              <div className="task-card" key={task.taskId}>
                 <div>
                   <StatusBadge
-                    tone={task.status === "at-risk" ? "danger" : "info"}
+                    tone={task.status === "BLOCKED" ? "danger" : "info"}
                   >
-                    {task.status === "at-risk" ? "AT RISK" : "IN PROGRESS"}
+                    {task.status === "BLOCKED" ? "BLOCKED" : "IN PROGRESS"}
                   </StatusBadge>
                   <h3>{task.name.toUpperCase()}</h3>
-                  <p>
-                    {task.stage.toUpperCase()} · Expected {task.expected}
-                  </p>
+                  <p>{(task.stageName ?? "UNASSIGNED").toUpperCase()} · Expected {task.earliestFinish}</p>
                 </div>
                 <div className="task-progress">
-                  <b>{task.progress}%</b>
+                  <b>{task.status === "COMPLETED" ? 100 : 0}%</b>
                   <div>
-                    <i style={{ width: `${task.progress}%` }} />
+                    <i style={{ width: `${task.status === "COMPLETED" ? 100 : 0}%` }} />
                   </div>
                 </div>
                 <button
@@ -110,6 +110,7 @@ export function CMDashboard() {
                 </button>
               </div>
             ))}
+            {!activeTasks.length && <p className="schedule-empty">No active site tasks yet.</p>}
           </section>
           <section className="card site-feed">
             <div className="card-head">
@@ -117,7 +118,7 @@ export function CMDashboard() {
                 <p className="eyebrow">SITE UPDATES</p>
                 <h2>Today’s activity</h2>
               </div>
-              <button className="link">All activity</button>
+              <button className="link" type="button" onClick={() => navigate("/cm/activity")}>All activity</button>
             </div>
             <ActivityFeed />
           </section>

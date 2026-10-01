@@ -7,12 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
-    "desktop:dev": "tauri dev",
-    "desktop:build": "tauri build",
-    "android:init": "tauri android init",
-    "android:dev": "tauri android dev",
-    "android:build": "tauri android build"
+    "tauri": "cd .. && npx --no-install tauri"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

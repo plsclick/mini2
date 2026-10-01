@@ -28,6 +28,9 @@ import { ActivityPage as CMActivityPage } from "../features/construction-manager
 import { NotificationsPage } from "../pages/shared/NotificationsPage";
 import { WorkspacePlaceholder } from "../components/project/WorkspacePlaceholder";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { useAuthStore } from "../store/authStore";
+import { ProfilePage } from "../pages/shared/ProfilePage";
+import { SettingsPage } from "../pages/shared/SettingsPage";
 
 const Client = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute role="client">{children}</ProtectedRoute>
@@ -40,6 +43,8 @@ const CM = ({ children }: { children: React.ReactNode }) => (
 );
 
 export function AppRoutes() {
+  const user = useAuthStore((state) => state.user);
+
   return (
     <Routes>
       {/* ── Auth ── */}
@@ -118,14 +123,18 @@ export function AppRoutes() {
       />
       <Route
         path="/profile"
-        element={<ProtectedRoute><WorkspacePlaceholder eyebrow="USER PROFILE" title="Your profile" /></ProtectedRoute>}
+        element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}
       />
       <Route
         path="/settings"
-        element={<ProtectedRoute><WorkspacePlaceholder eyebrow="WORKSPACE SETTINGS" title="Settings" /></ProtectedRoute>}
+        element={<ProtectedRoute><SettingsPage /></ProtectedRoute>}
       />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route
+        path="/"
+        element={<Navigate to="/login" replace />}
+      />
+      <Route path="*" element={<Navigate to={user ? `/${user.role}/dashboard` : "/login"} replace />} />
     </Routes>
   );
 }

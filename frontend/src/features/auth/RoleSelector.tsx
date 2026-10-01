@@ -27,6 +27,7 @@ export function RoleSelector({
       {roles.map(([role, Icon, title, description]) => (
         <button
           key={role}
+          type="button"
           className={value === role ? "selected" : ""}
           onClick={() => onChange(role)}
         >

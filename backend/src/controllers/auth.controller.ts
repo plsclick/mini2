@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service";
-import { RegisterSchema, LoginSchema } from "../validators/auth.validator";
+import { RegisterSchema, LoginSchema, UpdateProfileSchema } from "../validators/auth.validator";
 import { sendSuccess, sendCreated } from "../utils/apiResponse";
 import { NotFoundError } from "../utils/errors";
 
@@ -25,6 +25,14 @@ export const authController = {
     try {
       const user = await authService.getMe(req.user.id);
       if (!user) throw new NotFoundError("User");
+      sendSuccess(res, user);
+    } catch (err) { next(err); }
+  },
+
+  async updateProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const input = UpdateProfileSchema.parse(req.body);
+      const user = await authService.updateProfile(req.user.id, input);
       sendSuccess(res, user);
     } catch (err) { next(err); }
   },

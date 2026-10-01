@@ -1,5 +1,6 @@
 import { MoreHorizontal, Plus, Truck } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CriticalPath } from "../../components/dependency/CriticalPath";
 import { RiskCenter } from "../../components/risk/RiskCenter";
 import { GanttChart } from "../../components/timeline/GanttChart";
@@ -7,25 +8,32 @@ import { AppShell } from "../../components/navigation/AppShell";
 import { MetricCard } from "../../components/ui/MetricCard";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { useProjectSchedule } from "../../hooks/useProjectSchedule";
-const healthScores: [string, number][] = [
-  ["Schedule", 76],
-  ["Execution", 84],
-  ["Resources", 89],
-  ["Risk", 68],
-];
+import { useAuthStore } from "../../store/authStore";
 export function PMDashboard() {
+  const navigate = useNavigate();
   const [simulated, setSimulated] = useState(false);
-  const { schedule } = useProjectSchedule();
+  const [selectedTaskId, setSelectedTaskId] = useState("");
+  const [delayDays, setDelayDays] = useState(1);
+  const { schedule, dashboard } = useProjectSchedule();
+  const user = useAuthStore((state) => state.user);
+  const statistics = dashboard?.statistics;
+  const selectedTask = schedule?.tasks.find((task) => task.taskId === selectedTaskId) ?? schedule?.tasks[0];
+  const healthScores: [string, number][] = [
+    ["Schedule", statistics ? Math.max(0, 100 - statistics.activeDelayDays * 5) : 0],
+    ["Execution", statistics?.averageTaskProgress ?? 0],
+    ["Resources", statistics ? Math.min(100, statistics.resources * 10) : 0],
+    ["Risk", statistics ? Math.max(0, 100 - statistics.riskWeight * 10) : 0],
+  ];
   return (
     <AppShell>
       <main className="page pm-page">
         <section className="page-title compact">
           <div>
-            <p className="eyebrow">SKYLINE RESIDENCY · PROJECT CONTROL</p>
-            <h1>Good morning, Aditya.</h1>
-            <p>Here’s the current project pulse.</p>
+            <p className="eyebrow">{dashboard?.project.name ?? "PROJECT CONTROL"}</p>
+            <h1>Good morning, {user?.name ?? "there"}.</h1>
+            <p>{dashboard ? "Here’s the current project pulse." : "Loading project data..."}</p>
           </div>
-          <button className="primary small">
+          <button className="primary small" type="button" onClick={() => navigate("/pm/activity")}>
             <Plus size={16} />
             CREATE UPDATE
           </button>
@@ -33,30 +41,30 @@ export function PMDashboard() {
         <div className="metrics six">
           <MetricCard
             label="OVERALL PROGRESS"
-            value="72%"
-            detail="↑ 4% this week"
+            value={dashboard ? `${Math.round(dashboard.project.progress)}%` : "—"}
+            detail={statistics ? `${statistics.completedTasks} of ${statistics.totalTasks} tasks complete` : "Loading"}
             tone="amber"
           />
           <MetricCard
             label="SCHEDULE VARIANCE"
-            value="+4d"
-            detail="At risk"
+            value={statistics ? `+${statistics.activeDelayDays}d` : "—"}
+            detail={statistics?.activeDelays ? `${statistics.activeDelays} active delays` : "No active delays"}
             tone="danger"
           />
           <MetricCard label="CRITICAL TASKS" value={schedule ? String(schedule.statistics.criticalTaskCount).padStart(2, "0") : "—"} detail={schedule ? `of ${schedule.statistics.totalTasks} tasks` : "Schedule unavailable"} />
           <MetricCard
             label="ACTIVE DELAYS"
-            value="03"
-            detail="Needs review"
+            value={statistics ? String(statistics.activeDelays).padStart(2, "0") : "—"}
+            detail={statistics?.activeDelays ? "Needs review" : "None reported"}
             tone="danger"
           />
           <MetricCard
             label="PROJECT RISK"
-            value="MED"
-            detail="Medium exposure"
+            value={statistics ? statistics.activeRisks ? statistics.riskWeight >= 6 ? "HIGH" : "MED" : "LOW" : "—"}
+            detail={statistics ? `${statistics.activeRisks} active risks` : "Loading"}
             tone="amber"
           />
-          <MetricCard label="RESOURCES" value="84%" detail="Utilization" />
+          <MetricCard label="RESOURCES" value={statistics ? String(statistics.resources) : "—"} detail="Assigned resources" />
         </div>
         <div className="pm-grid">
           <section className="card health">
@@ -69,8 +77,8 @@ export function PMDashboard() {
             </div>
             <div className="health-body">
               <div className="health-score">
-                <strong>
-                  82<small>%</small>
+                  <strong>
+                    {statistics ? Math.round(healthScores.reduce((sum, [, value]) => sum + value, 0) / healthScores.length) : "—"}<small>{statistics ? "%" : ""}</small>
                 </strong>
                 <span>OVERALL HEALTH</span>
               </div>
@@ -101,30 +109,17 @@ export function PMDashboard() {
                 <p className="eyebrow">CRITICAL PATH</p>
                 <h2>Dependency network</h2>
               </div>
-              <button className="link">Expand graph</button>
+              <button className="link" type="button" onClick={() => navigate("/pm/critical-path")}>Expand graph</button>
             </div>
             <CriticalPath schedule={schedule} />
           </section>
           <section className="card recovery">
             <p className="eyebrow">RECOVERY CENTER</p>
             <h2>
-              Recover <span>+4 days</span>
+              Active impact <span>{statistics ? `${statistics.activeDelayDays} days` : "—"}</span>
             </h2>
-            <p className="sub">Combine interventions to restore schedule.</p>
-            {[
-              ["Expedite Steel", "2 days"],
-              ["Additional Workforce", "1 day"],
-              ["Parallel Electrical Prep", "2 days"],
-            ].map(([name, days]) => (
-              <div className="recovery-row" key={name}>
-                <span>
-                  <Truck size={16} />
-                  {name}
-                </span>
-                <b>+{days}</b>
-                <button>ADD</button>
-              </div>
-            ))}
+            <p className="sub">Recovery recommendations will use the active delays and project schedule.</p>
+            <div className="recovery-row"><span><Truck size={16} />Active delays</span><b>{statistics?.activeDelays ?? "—"}</b></div>
           </section>
           <section className="card simulator">
             <div>
@@ -134,16 +129,17 @@ export function PMDashboard() {
             <div className="sim-controls">
               <label>
                 SELECT TASK
-                <select>
-                  <option>Structural Steel</option>
+                <select value={selectedTask?.taskId ?? ""} onChange={(event) => { setSelectedTaskId(event.target.value); setSimulated(false); }}>
+                  {!schedule?.tasks.length && <option value="">No tasks available</option>}
+                  {schedule?.tasks.map((task) => <option key={task.taskId} value={task.taskId}>{task.name}</option>)}
                 </select>
               </label>
               <label>
                 DELAY
                 <div className="stepper">
-                  <button>−</button>
-                  <b>5 DAYS</b>
-                  <button>+</button>
+                  <button type="button" onClick={() => setDelayDays((value) => Math.max(1, value - 1))}>−</button>
+                  <b>{delayDays} DAYS</b>
+                  <button type="button" onClick={() => setDelayDays((value) => value + 1)}>+</button>
                 </div>
               </label>
               <button
@@ -155,14 +151,10 @@ export function PMDashboard() {
             </div>
             {simulated && (
               <div className="sim-result">
-                <span>
-                  Original <b>18 Dec</b>
-                </span>
+                <span>{selectedTask?.name ?? "No task selected"}</span>
                 <span>→</span>
-                <span>
-                  Simulated <b className="red">23 Dec</b>
-                </span>
-                <span>8 affected tasks · critical path affected</span>
+                <span><b className="red">+{delayDays} days</b></span>
+                <span>Simulation preview only; save a delay report to update the project.</span>
               </div>
             )}
           </section>

@@ -4,16 +4,19 @@ import {
   Building2,
   ChevronDown,
   HelpCircle,
+  LogOut,
   Menu,
   Search,
   Settings,
   UserRound,
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Brand } from "../ui/Brand";
 import { navigation } from "./navigationConfig";
 import { useAuthStore } from "../../store/authStore";
 import { useUIStore } from "../../store/uiStore";
+import { api } from "../../services/api";
+import { useEffect, useState } from "react";
 
 const roleLabel = {
   client: "CLIENT",
@@ -23,10 +26,23 @@ const roleLabel = {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const user = useAuthStore((state) => state.user)!;
+  const signOut = useAuthStore((state) => state.signOut);
+  const navigate = useNavigate();
   const { pathname } = useLocation();
   const { searchOpen, sidebarOpen, setSearchOpen, toggleSidebar } =
     useUIStore();
   const items = navigation[user.role];
+  const [activeProjectName, setActiveProjectName] = useState("No project selected");
+  useEffect(() => {
+    void api.get<Array<{ id: string; name: string }>>("/projects")
+      .then((projects) => setActiveProjectName(projects[0]?.name ?? "No project selected"))
+      .catch(() => setActiveProjectName("Project unavailable"));
+  }, []);
+  const handleSignOut = async () => {
+    try { await api.post("/auth/logout", {}); } catch { /* local session still must be cleared */ }
+    signOut();
+    navigate("/login", { replace: true });
+  };
   return (
     <div className="shell">
       <aside className={`side ${sidebarOpen ? "open" : ""}`}>
@@ -62,7 +78,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="project-select">
             <Building2 />
             <span>
-              <small>ACTIVE PROJECT</small>Skyline Residency
+              <small>ACTIVE PROJECT</small>{activeProjectName}
             </span>
             <ChevronDown size={15} />
           </div>
@@ -72,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <kbd>⌘ K</kbd>
           </button>
           <div className="head-actions">
-            <button>
+            <button type="button" title="Open settings" onClick={() => navigate("/settings")}>
               <HelpCircle size={18} />
             </button>
             <NavLink className="notify" to="/notifications">
@@ -87,6 +103,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
               <ChevronDown size={15} />
             </div>
+            <button type="button" title="Sign out" onClick={() => void handleSignOut()}>
+              <LogOut size={18} />
+            </button>
           </div>
         </header>
         {children}
@@ -117,12 +136,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
             <p>QUICK NAVIGATION</p>
             {[
-              "Skyline Residency",
-              "Structural Steel · Level 04",
-              "Steel delivery delay",
-              "Recovery options",
-            ].map((result) => (
-              <button key={result}>
+              [activeProjectName, "/pm/dashboard"],
+              ["Tasks and schedule", "/pm/tasks"],
+              ["Delays and risks", "/pm/risks"],
+              ["Project activity", "/pm/activity"],
+            ].map(([result, path]) => (
+              <button key={result} type="button" onClick={() => { setSearchOpen(false); navigate(path); }}>
                 {result}
                 <span>↗</span>
               </button>

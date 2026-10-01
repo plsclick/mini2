@@ -23,6 +23,53 @@ button {
   cursor: pointer;
   color: inherit;
 }
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+input,
+select,
+textarea {
+  accent-color: var(--amber);
+}
+.page input,
+.page select,
+.page textarea {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  background: #15191f;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 11px 12px;
+  outline: none;
+}
+.page textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.page input:focus,
+.page select:focus,
+.page textarea:focus {
+  border-color: #7b6842;
+  box-shadow: 0 0 0 2px #7b68421f;
+}
+.page input::placeholder,
+.page textarea::placeholder {
+  color: var(--dim);
+}
+.page label {
+  display: block;
+  color: var(--muted);
+  font: 10px "DM Mono";
+  letter-spacing: 0.7px;
+  margin-top: 17px;
+}
+.page label + label {
+  margin-top: 17px;
+}
 a {
   color: inherit;
   text-decoration: none;

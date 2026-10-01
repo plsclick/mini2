@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.buildpulse.desktop",
   "build": {
-    "frontendDist": "../dist",
+    "frontendDist": "../frontend/dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeDevCommand": "npm --prefix frontend run dev",
+    "beforeBuildCommand": "npm --prefix frontend run build"
   },
   "app": {
     "windows": [

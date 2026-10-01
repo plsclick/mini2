@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Camera, Check, Clock3, Plus, Upload, X } from "lucide-react";
 import { AppShell } from "../../components/navigation/AppShell";
 import { fileService } from "../../services/platform/fileService";
+import { useActiveProject } from "../../hooks/useActiveProject";
 import "./SiteUpdates.css";
 
 type SiteUpdate = {
@@ -12,31 +13,10 @@ type SiteUpdate = {
   time: string;
 };
 
-const initialUpdates: SiteUpdate[] = [
-  {
-    title: "Structural steel installation progressing",
-    stage: "Structure · Level 04",
-    description: "East elevation steel is fixed and inspected. West-side connection work continues after the delivery check.",
-    evidence: "level-04-steel-progress.jpg",
-    time: "Today · 10:32 AM",
-  },
-  {
-    title: "Steel delivery received on site",
-    stage: "Structure · Material laydown",
-    description: "Partial shipment received and counted. Remaining steel is expected tomorrow morning.",
-    evidence: "",
-    time: "Yesterday · 3:18 PM",
-  },
-  {
-    title: "Foundation inspection completed",
-    stage: "Foundation · Grid C–F",
-    description: "Inspection passed. The area is clear for the next planned activity.",
-    evidence: "foundation-inspection.pdf",
-    time: "17 Nov · 12:06 PM",
-  },
-];
+const initialUpdates: SiteUpdate[] = [];
 
 export function SiteUpdates() {
+  const { project } = useActiveProject();
   const [updates, setUpdates] = useState(initialUpdates);
   const [title, setTitle] = useState("");
   const [stage, setStage] = useState("Structure · Level 04");
@@ -67,7 +47,7 @@ export function SiteUpdates() {
       <main className="page site-updates-page">
         <section className="page-title compact">
           <div>
-            <p className="eyebrow">SITE OPERATIONS · SKYLINE RESIDENCY</p>
+            <p className="eyebrow">SITE OPERATIONS · {project?.name ?? "NO PROJECT"}</p>
             <h1>Site updates</h1>
             <p>Share verified progress and conditions with the project team.</p>
           </div>

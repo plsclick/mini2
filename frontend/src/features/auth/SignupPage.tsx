@@ -8,12 +8,31 @@ import { RoleSelector } from "./RoleSelector";
 export function SignupPage() {
   const [step, setStep] = useState(1);
   const [role, setRole] = useState<UserRole>("client");
-  const signIn = useAuthStore((s) => s.signIn);
+  const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
-  const next = () =>
-    step === 3
-      ? (signIn(role), navigate(`/${role}/dashboard`))
-      : setStep(step + 1);
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", organizationName: "" });
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
+  const next = async () => {
+    setError("");
+    if (step === 1) {
+      if (!form.name || !form.email || !form.password || !form.confirmPassword) return setError("Complete all account fields.");
+      if (form.password !== form.confirmPassword) return setError("Passwords do not match.");
+      if (form.password.length < 8 || !/[A-Z]/.test(form.password) || !/[0-9]/.test(form.password)) return setError("Password needs 8 characters, one uppercase letter, and one number.");
+    }
+    if (step < 3) return setStep(step + 1);
+    if (!form.organizationName) return setError("Enter your organization name.");
+    setIsSubmitting(true);
+    try {
+      const user = await register({ name: form.name, email: form.email, password: form.password, organizationName: form.organizationName, role: role === "client" ? "CLIENT" : role === "pm" ? "PROJECT_MANAGER" : "CONSTRUCTION_MANAGER" });
+      navigate(`/${user.role}/dashboard`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not create account.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <AuthLayout>
       <div className="auth-inner">
@@ -24,19 +43,19 @@ export function SignupPage() {
             <p className="sub">Start with a secure project workspace.</p>
             <label>
               FULL NAME
-              <input placeholder="Your name" />
+              <input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Your name" />
             </label>
             <label>
               EMAIL
-              <input placeholder="name@company.com" />
+              <input type="email" value={form.email} onChange={(event) => update("email", event.target.value)} placeholder="name@company.com" />
             </label>
             <label>
               PASSWORD
-              <input type="password" placeholder="Create password" />
+              <input type="password" value={form.password} onChange={(event) => update("password", event.target.value)} placeholder="Create password" />
             </label>
             <label>
               CONFIRM PASSWORD
-              <input type="password" placeholder="Confirm password" />
+              <input type="password" value={form.confirmPassword} onChange={(event) => update("confirmPassword", event.target.value)} placeholder="Confirm password" />
             </label>
           </>
         )}
@@ -57,7 +76,7 @@ export function SignupPage() {
             </p>
             <label>
               ORGANIZATION NAME
-              <input placeholder="Company or organization" />
+              <input value={form.organizationName} onChange={(event) => update("organizationName", event.target.value)} placeholder="Company or organization" />
             </label>
             <label>
               PHONE
@@ -69,6 +88,7 @@ export function SignupPage() {
             </label>
           </>
         )}
+        {error && <p role="alert" style={{ color: "var(--red)" }}>{error}</p>}
         <div className="form-row">
           <button
             className="link"
@@ -78,8 +98,8 @@ export function SignupPage() {
           >
             <ArrowLeft size={14} /> BACK
           </button>
-          <button className="primary small" onClick={next}>
-            {step === 3 ? "CREATE ACCOUNT" : "CONTINUE"}{" "}
+          <button className="primary small" onClick={() => void next()} disabled={isSubmitting}>
+            {isSubmitting ? "CREATING..." : step === 3 ? "CREATE ACCOUNT" : "CONTINUE"}{" "}
             <ArrowRight size={16} />
           </button>
         </div>

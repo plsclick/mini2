@@ -3,7 +3,7 @@ import type { UserRole } from "../types/user";
 
 export function useAuth() {
   const user = useAuthStore((s) => s.user);
-  const signIn = useAuthStore((s) => s.signIn);
+  const authenticate = useAuthStore((s) => s.authenticate);
   const signOut = useAuthStore((s) => s.signOut);
 
   const isAuthenticated = user !== null;
@@ -11,5 +11,5 @@ export function useAuth() {
 
   const is = (r: UserRole) => role === r;
 
-  return { user, isAuthenticated, role, is, signIn, signOut };
+  return { user, isAuthenticated, role, is, authenticate, signOut };
 }

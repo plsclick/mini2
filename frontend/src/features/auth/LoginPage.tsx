@@ -24,12 +24,6 @@ export function LoginPage() {
     }
   };
 
-  const demoAccounts = {
-    client: "client@buildpulse.demo",
-    pm: "pm@buildpulse.demo",
-    cm: "cm@buildpulse.demo",
-  } as const;
-
   return (
     <AuthLayout>
       <div className="auth-inner">
@@ -64,17 +58,9 @@ export function LoginPage() {
           OR
           <span />
         </div>
-        <button className="google">
+        <button className="google" type="button" onClick={() => setError("Google sign-in is not configured for this workspace yet.")}>
           G <span>Continue with Google</span>
         </button>
-        <div className="demo">
-          <p>QUICK DEMO ACCESS</p>
-          <div>
-            <button type="button" onClick={() => void enter(demoAccounts.client, "Password123!")}>Client</button>
-            <button type="button" onClick={() => void enter(demoAccounts.pm, "Password123!")}>Project Manager</button>
-            <button type="button" onClick={() => void enter(demoAccounts.cm, "Password123!")}>Construction Manager</button>
-          </div>
-        </div>
         <p className="signup">
           Don't have an account?{" "}
           <button type="button" className="link" onClick={() => navigate("/signup")}>

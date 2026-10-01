@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import type { User, UserRole } from "../types/user";
-import { mockUsers } from "../mock/users";
 import { api, apiTokenStorageKey } from "../services/api";
 
 interface ApiUser {
@@ -12,6 +11,14 @@ interface ApiUser {
 interface AuthResponse {
   token: string;
   user: ApiUser;
+}
+
+interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+  organizationName: string;
+  role: "CLIENT" | "PROJECT_MANAGER" | "CONSTRUCTION_MANAGER";
 }
 
 function toAppUser(user: ApiUser): User {
@@ -32,19 +39,15 @@ function storedUser(): User | null {
 interface AuthState {
   user: User | null;
   token: string | null;
-  signIn: (role: UserRole) => void;
   authenticate: (email: string, password: string) => Promise<User>;
+  register: (input: RegisterInput) => Promise<User>;
+  updateUser: (user: User) => void;
   signOut: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: storedUser(),
   token: localStorage.getItem(apiTokenStorageKey),
-  signIn: (role) => {
-    localStorage.removeItem(apiTokenStorageKey);
-    localStorage.removeItem("buildpulse.user");
-    set({ user: mockUsers[role], token: null });
-  },
   authenticate: async (email, password) => {
     const result = await api.post<AuthResponse>("/auth/login", { email, password });
     const user = toAppUser(result.user);
@@ -53,6 +56,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user, token: result.token });
     return user;
   },
+  register: async (input) => {
+    const result = await api.post<AuthResponse>("/auth/register", input);
+    const user = toAppUser(result.user);
+    localStorage.setItem(apiTokenStorageKey, result.token);
+    localStorage.setItem("buildpulse.user", JSON.stringify(user));
+    set({ user, token: result.token });
+    return user;
+  },
+  updateUser: (user) => set({ user }),
   signOut: () => {
     localStorage.removeItem(apiTokenStorageKey);
     localStorage.removeItem("buildpulse.user");

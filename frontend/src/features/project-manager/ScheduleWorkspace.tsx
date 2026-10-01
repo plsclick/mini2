@@ -3,6 +3,7 @@ import { CalendarRange, GitBranch, RefreshCw, Search } from "lucide-react";
 import { AppShell } from "../../components/navigation/AppShell";
 import { CriticalPath } from "../../components/dependency/CriticalPath";
 import { useProjectSchedule } from "../../hooks/useProjectSchedule";
+import { projectDataService } from "../../services/projectDataService";
 import type { ScheduledTask } from "../../types/schedule";
 import "./ScheduleWorkspace.css";
 
@@ -10,17 +11,17 @@ type ScheduleView = "timeline" | "dependencies" | "critical-path";
 
 const titles: Record<ScheduleView, { eyebrow: string; title: string; description: string }> = {
   timeline: {
-    eyebrow: "MASTER SCHEDULE · SKYLINE RESIDENCY",
+    eyebrow: "MASTER SCHEDULE",
     title: "Project timeline",
     description: "Planned work, current delivery, and schedule pressure in one view.",
   },
   dependencies: {
-    eyebrow: "SCHEDULE LOGIC · SKYLINE RESIDENCY",
+    eyebrow: "SCHEDULE LOGIC",
     title: "Dependency network",
     description: "Review the sequence of work and how downstream activities connect.",
   },
   "critical-path": {
-    eyebrow: "PROJECT CONTROL · SKYLINE RESIDENCY",
+    eyebrow: "PROJECT CONTROL",
     title: "Critical path",
     description: "Track the activities with no schedule float and their effect on handover.",
   },
@@ -56,12 +57,18 @@ function taskTone(task: ScheduledTask): string {
 }
 
 export function ScheduleWorkspace({ mode }: { mode: ScheduleView }) {
-  const { schedule, isLoading, error, refresh } = useProjectSchedule();
+  const { schedule, projectId, isLoading, error, refresh } = useProjectSchedule();
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("All stages");
   const [status, setStatus] = useState("All status");
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [scale, setScale] = useState("WEEK");
+  const [predecessorTaskId, setPredecessorTaskId] = useState("");
+  const [successorTaskId, setSuccessorTaskId] = useState("");
+  const [dependencyType, setDependencyType] = useState("FINISH_TO_START");
+  const [lagDays, setLagDays] = useState(0);
+  const [dependencyError, setDependencyError] = useState("");
+  const [isAddingDependency, setIsAddingDependency] = useState(false);
   const startDay = schedule?.projectStartDate ? dateDay(schedule.projectStartDate) : 0;
   const timelineDays = Math.max(schedule?.totalDurationDays ?? 0, 1);
   const scheduleTasks = (schedule?.tasks ?? []).map((task) => ({
@@ -92,6 +99,10 @@ export function ScheduleWorkspace({ mode }: { mode: ScheduleView }) {
     }).toUpperCase();
   });
   const pageTitle = titles[mode];
+  const addDependency = async () => {
+    if (!projectId || !predecessorTaskId || !successorTaskId || predecessorTaskId === successorTaskId) { setDependencyError("Choose two different tasks."); return; }
+    try { await projectDataService.createDependency(projectId, { predecessorTaskId, successorTaskId, dependencyType, lagDays }); setPredecessorTaskId(""); setSuccessorTaskId(""); setDependencyError(""); setIsAddingDependency(false); refresh(); } catch (cause) { setDependencyError(cause instanceof Error ? cause.message : "Could not create dependency."); }
+  };
 
   return (
     <AppShell>
@@ -148,6 +159,7 @@ export function ScheduleWorkspace({ mode }: { mode: ScheduleView }) {
               <div className="schedule-heading"><GitBranch size={17} /><div><h2>{mode === "critical-path" ? "Critical sequence" : "Task relationships"}</h2><span>{schedule?.dependencies.length ?? 0} dependencies · {schedule?.statistics.totalTasks ?? 0} tasks</span></div></div>
               <div className="network-key"><i /> Critical sequence <span>•</span> <i className="network-muted" /> Other work</div>
             </div>
+            {mode === "dependencies" && <div className="card" style={{ margin: "0 20px 18px", background: "var(--panel)" }}><button className="outline" type="button" onClick={() => setIsAddingDependency((value) => !value)}>{isAddingDependency ? "CANCEL" : "ADD DEPENDENCY"}</button>{isAddingDependency && <div className="twocol"><label>PREDECESSOR<select value={predecessorTaskId} onChange={(event) => setPredecessorTaskId(event.target.value)}><option value="">Select task</option>{schedule?.tasks.map((task) => <option key={task.taskId} value={task.taskId}>{task.name}</option>)}</select></label><label>SUCCESSOR<select value={successorTaskId} onChange={(event) => setSuccessorTaskId(event.target.value)}><option value="">Select task</option>{schedule?.tasks.map((task) => <option key={task.taskId} value={task.taskId}>{task.name}</option>)}</select></label><label>TYPE<select value={dependencyType} onChange={(event) => setDependencyType(event.target.value)}><option value="FINISH_TO_START">Finish to start</option><option value="START_TO_START">Start to start</option><option value="FINISH_TO_FINISH">Finish to finish</option><option value="START_TO_FINISH">Start to finish</option></select></label><label>LAG DAYS<input type="number" value={lagDays} onChange={(event) => setLagDays(Number(event.target.value) || 0)} /></label><button className="primary small" type="button" onClick={() => void addDependency()}>SAVE DEPENDENCY</button></div>}{dependencyError && <p role="alert" style={{ color: "var(--red)" }}>{dependencyError}</p>}</div>}
             <CriticalPath schedule={schedule} criticalOnly={mode === "critical-path"} />
             <div className="network-footer"><span><b>CALCULATED COMPLETION</b> {formatDate(schedule?.calculatedCompletionDate ?? null)}</span><span><b>CRITICAL PATHS</b> {schedule?.criticalPaths.length ?? 0}{schedule?.criticalPathsTruncated ? "+" : ""}</span><span><b>CRITICAL TASKS</b> {schedule?.statistics.criticalTaskCount ?? 0}</span></div>
           </section>

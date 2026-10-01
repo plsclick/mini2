@@ -53,6 +53,49 @@ export const projectService = {
     return project;
   },
 
+  async getDashboard(projectId: string) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        ...projectSelect,
+        tasks: { select: { status: true, progress: true } },
+        delays: { where: { status: { in: ["OPEN", "INVESTIGATING"] } }, select: { delayDays: true } },
+        risks: { where: { status: { in: ["OPEN", "MONITORING"] } }, select: { severity: true } },
+        resources: { select: { id: true } },
+      },
+    });
+    if (!project) throw new NotFoundError("Project");
+
+    const totalTasks = project.tasks.length;
+    const completedTasks = project.tasks.filter((task) => task.status === "COMPLETED").length;
+    const averageTaskProgress = totalTasks === 0
+      ? 0
+      : Math.round(project.tasks.reduce((sum, task) => sum + task.progress, 0) / totalTasks);
+    const activeDelayDays = project.delays.reduce((sum, delay) => sum + delay.delayDays, 0);
+    const riskWeight = project.risks.reduce((sum, risk) => sum + (risk.severity === "CRITICAL" ? 4 : risk.severity === "HIGH" ? 3 : risk.severity === "MEDIUM" ? 2 : 1), 0);
+
+    return {
+      project: {
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        progress: project.progress,
+        plannedStartDate: project.plannedStartDate,
+        plannedEndDate: project.plannedEndDate,
+      },
+      statistics: {
+        totalTasks,
+        completedTasks,
+        activeDelays: project.delays.length,
+        activeDelayDays,
+        activeRisks: project.risks.length,
+        riskWeight,
+        resources: project.resources.length,
+        averageTaskProgress,
+      },
+    };
+  },
+
   async create(input: CreateProjectInput, userId: string, organizationId: string) {
     const [client, projectManager] = await Promise.all([
       input.clientId

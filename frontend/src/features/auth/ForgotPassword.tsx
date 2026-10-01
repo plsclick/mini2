@@ -1,8 +1,11 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AuthLayout } from "../../layouts/AuthLayout";
+import { useState } from "react";
 export function ForgotPassword() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
   return (
     <AuthLayout>
       <div className="auth-inner">
@@ -13,10 +16,10 @@ export function ForgotPassword() {
         </p>
         <label>
           EMAIL
-          <input type="email" placeholder="name@company.com" />
+          <input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" />
         </label>
-        <button className="primary">
-          SEND RESET LINK <ArrowRight size={16} />
+        <button className="primary" type="button" onClick={() => setSent(Boolean(email))} disabled={!email}>
+          {sent ? "RESET LINK REQUESTED" : "SEND RESET LINK"} <ArrowRight size={16} />
         </button>
         <button className="link back-link" onClick={() => navigate("/login")}>
           <ArrowLeft size={14} /> RETURN TO SIGN IN

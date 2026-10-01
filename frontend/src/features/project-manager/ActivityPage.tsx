@@ -1,14 +1,15 @@
 import { AppShell } from "../../components/navigation/AppShell";
 import { ActivityFeed } from "../../components/dashboard/ActivityFeed";
-import { ProgressHistory } from "../../components/dashboard/ProgressHistory";
+import { useActiveProject } from "../../hooks/useActiveProject";
 
 export function ActivityPage() {
+  const { project } = useActiveProject();
   return (
     <AppShell>
       <main className="page">
         <section className="page-title compact">
           <div>
-            <p className="eyebrow">COLLABORATION · SKYLINE RESIDENCY</p>
+            <p className="eyebrow">COLLABORATION · {project?.name ?? "NO PROJECT"}</p>
             <h1>Project activity</h1>
             <p>Every significant project event in chronological order.</p>
           </div>
@@ -25,9 +26,6 @@ export function ActivityPage() {
             <ActivityFeed />
           </section>
 
-          <section className="card progress-history">
-            <ProgressHistory />
-          </section>
         </div>
       </main>
     </AppShell>

@@ -21,6 +21,13 @@ export const projectController = {
     } catch (err) { next(err); }
   },
 
+  async dashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const dashboard = await projectService.getDashboard(req.params.id);
+      sendSuccess(res, dashboard);
+    } catch (err) { next(err); }
+  },
+
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const input = CreateProjectSchema.parse(req.body);

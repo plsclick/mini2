@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell } from "../navigation/AppShell";
+import { useActiveProject } from "../../hooks/useActiveProject";
 export function WorkspacePlaceholder({
   eyebrow,
   title,
@@ -9,6 +10,7 @@ export function WorkspacePlaceholder({
   title: string;
   children?: ReactNode;
 }) {
+  const { project } = useActiveProject();
   return (
     <AppShell>
       <main className="page">
@@ -16,7 +18,7 @@ export function WorkspacePlaceholder({
           <div>
             <p className="eyebrow">{eyebrow}</p>
             <h1>{title}</h1>
-            <p>Skyline Residency · live project workspace</p>
+            <p>{project?.name ?? "No project selected"} · live project workspace</p>
           </div>
         </section>
         {children ?? (
